@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Objects
 class CelestialBody extends THREE.Mesh {
-    constructor(radius, widthSegments, heightSegments, materialConfig, orbitSpeed) {
+    constructor(radius, widthSegments, heightSegments, materialConfig) {
         const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
         const material = new THREE.MeshPhongMaterial(materialConfig);
         super(geometry, material);
