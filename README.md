@@ -1,4 +1,4 @@
-# Solaru - A simply solar modeling project
+# Solaru - A simple solar modeling project
 
 ## Prerequisites
 
