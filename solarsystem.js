@@ -58,6 +58,10 @@ function createPlanet(radius, color, distanceFromSun, orbitSpeed) {
     const materialConfig = { color: color, shininess: 50, specular: 0x222222 };
     const planet = new CelestialBody(radius, 32, 32, materialConfig);
     planet.userData = { distanceFromSun, orbitSpeed };
+
+    const orbitRing = new CelestialRing(distanceFromSun, 0.01, 16, 100, { color: 0x000000 });
+    orbitRing.rotation.x = Math.PI / 2;
+    scene.add(orbitRing)
     return planet;
 }
 
@@ -74,27 +78,6 @@ const neptune = createPlanet(1.9, 0x4169e1, 100, 0.0001);
 // Add planets to the scene
 const planets = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune];
 planets.forEach(planet => scene.add(planet));
-
-const earthOrbit = new CelestialRing(
-    5,
-    0.01,
-    16,
-    100,
-    { color: 0x888888 }
-);
-
-const moonOrbit = new CelestialRing(
-    0.7,
-    0.0105,
-    16,
-    100,
-    { color: 0x888888 }
-);
-
-moonOrbit.rotation.x = earthOrbit.rotation.x = Math.PI / 2;
-scene.add(earthOrbit);
-scene.add(moonOrbit);
-earth.add(moonOrbit);
 
 const sunlight = new THREE.PointLight(0xffffff, 1.5, 500);
 sunlight.position.set(0, 0, 0);
