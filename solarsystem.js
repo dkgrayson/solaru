@@ -39,39 +39,42 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
+renderer.setClearColor(0xFFFFFF);
 
 // Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 
 // Celestial Objects and setup
+
 const sun = new Sun(
     1.5,
     32,
     32,
     {color: 0xFFFF00 }
 );
-
 scene.add(sun);
 
-const earth = new CelestialBody(
-    0.5,
-    32,
-    32,
-    { color: 0x9090FF, shininess: 50, specular: 0x222222 }
-);
+function createPlanet(radius, color, distanceFromSun, orbitSpeed) {
+    const materialConfig = { color: color, shininess: 50, specular: 0x222222 };
+    const planet = new CelestialBody(radius, 32, 32, materialConfig);
+    planet.userData = { distanceFromSun, orbitSpeed };
+    return planet;
+}
 
-scene.add(earth);
+// Create planets
+const mercury = createPlanet(0.5, 0x909090, 10, 0.004);
+const venus = createPlanet(1.2, 0xa0522d, 18, 0.003);
+const earth = createPlanet(1.3, 0x9090FF, 25, 0.002);
+const mars = createPlanet(0.7, 0xb22222, 35, 0.0018);
+const jupiter = createPlanet(3, 0xf4a460, 55, 0.001);
+const saturn = createPlanet(2.5, 0xdaa520, 70, 0.0009);
+const uranus = createPlanet(2, 0xadff2f, 85, 0.0004);
+const neptune = createPlanet(1.9, 0x4169e1, 100, 0.0001);
 
-const moon = new CelestialBody(
-    0.1,
-    32,
-    32,
-    { color: 0xAAAAAA, shininess: 10, specular: 0x111111 }
-);
+// Add planets to the scene
+const planets = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune];
+planets.forEach(planet => scene.add(planet));
 
-scene.add(moon);
-
-const earthOrbitSpeed = 0.001;
 const earthOrbit = new CelestialRing(
     5,
     0.01,
@@ -80,7 +83,6 @@ const earthOrbit = new CelestialRing(
     { color: 0x888888 }
 );
 
-const moonOrbitSpeed = 0.002;
 const moonOrbit = new CelestialRing(
     0.7,
     0.0105,
@@ -99,12 +101,20 @@ sunlight.position.set(0, 0, 0);
 sunlight.castShadow = true;
 scene.add(sunlight);
 
+
 // Main loop
 function animate() {
     requestAnimationFrame(animate);
-    updateOrbit(earth, sun, 5, earthOrbitSpeed);
-    updateOrbit(moon, earth, 0.7, moonOrbitSpeed);
+    updatePlanets(); // Update planet positions
     renderer.render(scene, camera);
+}
+
+function updatePlanets() {
+    planets.forEach(planet => {
+        const { distanceFromSun, orbitSpeed } = planet.userData;
+        planet.position.x = Math.cos(Date.now() * orbitSpeed) * distanceFromSun;
+        planet.position.z = Math.sin(Date.now() * orbitSpeed) * distanceFromSun;
+    });
 }
 
 function updateOrbit(object, center, orbitRadius, orbitSpeed) {
