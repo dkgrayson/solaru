@@ -2,11 +2,11 @@
   "name": "Solaru Nodes",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "solar": "parcel templates/solar-system/index.html",
-    "trek": "parcel templates/globe-trekker/index.html"
+    "solar": "parcel src/templates/solar-system/index.html",
+    "trek": "parcel src/templates/globe-trekker/index.html",
+    "build": "parcel build src/templates/globe-trekker/index.html"
   },
   "author": "David Grayson (dkgrayson@gmail.com)",
   "license": "ISC",
