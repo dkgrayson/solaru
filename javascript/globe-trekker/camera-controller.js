@@ -12,16 +12,13 @@ export class CameraController {
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-
+        this.isJumping = false;
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
-        this.speed = 25;
-
-        this.isJumping = false;
+        this.speed = 150;
         this.verticalVelocity = 0;
         this.gravity = -1.8;
         this.jumpSpeed = 1;
-
         this.cameraHeightAboveSurface = 20;
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -81,17 +78,15 @@ export class CameraController {
     }
 
     update(deltaTime) {
-        // Calculate the normal at the camera's position
         let cameraPosition = this.controls.getObject().position;
         let planetCenter = this.planet.mesh.position;
         let normal = new THREE.Vector3().subVectors(cameraPosition, planetCenter).normalize();
-    
-        // Update the camera's 'up' vector
         this.camera.up.copy(normal);
     
-        // Calculate the forward and right vectors tangential to the planet's surface
+
         let forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
         forward.projectOnPlane(normal);
+
         let right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion).normalize();
         right.projectOnPlane(normal);
     

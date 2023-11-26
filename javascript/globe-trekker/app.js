@@ -10,7 +10,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const planet = new Planet(1500, 64, 64, 0x2266ff);
+let planet = new Planet(15000, 64, 64);
 scene.add(planet.mesh);
 
 const cameraController = new CameraController(camera, scene, planet);
