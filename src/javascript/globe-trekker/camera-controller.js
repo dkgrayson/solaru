@@ -1,124 +1,126 @@
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { InputController } from './input-controller.js';
 
 export class CameraController {
-    constructor(camera, scene, planet) {
-        this.controls = new PointerLockControls(camera, document.body);
-        this.planet = planet;
-        this.camera = camera;
-        scene.add(this.controls.getObject());
+  constructor(camera, objects) {
+    this.camera_ = camera;
+    this.input_ = new InputController();
+    this.rotation_ = new THREE.Quaternion();
+    this.translation_ = new THREE.Vector3(0, 95000 + 10, 0);
+    this.phi_ = 0;
+    this.phiSpeed_ = 8;
+    this.theta_ = 0;
+    this.thetaSpeed_ = 5;
+    this.walkingSpeed = 10
+    this.headBobActive_ = false;
+    this.headBobTimer_ = 10;
+    this.objects_ = objects;
+    this.keyMap = {
+        'a': 65,
+        's': 83,
+        'w': 87,
+        'd': 68
+    };
+  }
 
-        this.moveForward = false;
-        this.moveBackward = false;
-        this.moveLeft = false;
-        this.moveRight = false;
-        this.isJumping = false;
-        this.velocity = new THREE.Vector3();
-        this.direction = new THREE.Vector3();
-        this.speed = 150;
-        this.verticalVelocity = 0;
-        this.gravity = -1.8;
-        this.jumpSpeed = 1;
-        this.cameraHeightAboveSurface = 20;
+  clamp(x, a, b) {
+    return Math.min(Math.max(x, a), b);
+  }
 
-        document.addEventListener('keydown', this.onKeyDown.bind(this), false);
-        document.addEventListener('keyup', this.onKeyUp.bind(this), false);
+  update(timeElapsedS) {
+    this.updateRotation_(timeElapsedS);
+    this.updateCamera_(timeElapsedS);
+    this.updateTranslation_(timeElapsedS);
+    this.updateHeadBob_(timeElapsedS);
+    this.input_.update(timeElapsedS);
+  }
 
-        document.addEventListener('click', () => {
-            this.controls.lock();
-        }, false);
-    }
+  updateCamera_(_) {
+    this.camera_.quaternion.copy(this.rotation_);
+    this.camera_.position.copy(this.translation_);
+    this.camera_.position.y += Math.sin(this.headBobTimer_ * 10) * 1.5;
 
-    onKeyDown(event) {
-        switch (event.code) {
-            case 'ArrowUp':
-            case 'KeyW':
-                this.moveForward = true;
-                break;
-            case 'ArrowLeft':
-            case 'KeyA':
-                this.moveLeft = true;
-                break;
-            case 'ArrowDown':
-            case 'KeyS':
-                this.moveBackward = true;
-                break;
-            case 'ArrowRight':
-            case 'KeyD':
-                this.moveRight = true;
-                break;
-            case 'Space':
-            if (!this.isJumping) {
-                this.isJumping = true;
-                this.verticalVelocity = this.jumpSpeed;
-            }
-            break;
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(this.rotation_);
+
+    const dir = forward.clone();
+
+    forward.multiplyScalar(100);
+    forward.add(this.translation_);
+
+    let closest = forward;
+    const result = new THREE.Vector3();
+    const ray = new THREE.Ray(this.translation_, dir);
+    for (let i = 0; i < this.objects_.length; ++i) {
+      if (ray.intersectBox(this.objects_[i], result)) {
+        if (result.distanceTo(ray.origin) < closest.distanceTo(ray.origin)) {
+          closest = result.clone();
         }
+      }
     }
 
-    onKeyUp(event) {
-        switch (event.code) {
-            case 'ArrowUp':
-            case 'KeyW':
-                this.moveForward = false;
-                break;
-            case 'ArrowLeft':
-            case 'KeyA':
-                this.moveLeft = false;
-                break;
-            case 'ArrowDown':
-            case 'KeyS':
-                this.moveBackward = false;
-                break;
-            case 'ArrowRight':
-            case 'KeyD':
-                this.moveRight = false;
-                break;
-        }
+    this.camera_.lookAt(closest);
+  }
+
+  updateHeadBob_(timeElapsedS) {
+    if (this.headBobActive_) {
+      const wavelength = Math.PI;
+      const nextStep = 1 + Math.floor(((this.headBobTimer_ + 0.000001) * 10) / wavelength);
+      const nextStepTime = nextStep * wavelength / 10;
+      this.headBobTimer_ = Math.min(this.headBobTimer_ + timeElapsedS, nextStepTime);
+
+      if (this.headBobTimer_ == nextStepTime) {
+        this.headBobActive_ = false;
+      }
+    }
+  }
+
+  updateTranslation_(timeElapsedS) {
+    const forwardVelocity = (this.input_.key(this.keyMap.w) ? this.walkingSpeed : 0) + (this.input_.key(this.keyMap.s) ? -this.walkingSpeed : 0);
+    const strafeVelocity = (this.input_.key(this.keyMap.a) ? this.walkingSpeed : 0) + (this.input_.key(this.keyMap.d) ? -this.walkingSpeed : 0);
+
+    const qx = new THREE.Quaternion();
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.phi_);
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(qx);
+    forward.multiplyScalar(forwardVelocity * timeElapsedS * 10);
+
+    const left = new THREE.Vector3(-1, 0, 0);
+    left.applyQuaternion(qx);
+    left.multiplyScalar(strafeVelocity * timeElapsedS * 10);
+
+    this.translation_.add(forward);
+    this.translation_.add(left);
+
+    const distanceFromPlanetCenter = this.translation_.length();
+    if (distanceFromPlanetCenter > this.planetRadius + 2) {
+      const heightAdjustment = distanceFromPlanetCenter - this.planetRadius;
+      this.translation_.multiplyScalar((this.planetRadius + 2) / distanceFromPlanetCenter);
+      this.translation_.y += heightAdjustment;
     }
 
-    update(deltaTime) {
-        let cameraPosition = this.controls.getObject().position;
-        let planetCenter = this.planet.mesh.position;
-        let normal = new THREE.Vector3().subVectors(cameraPosition, planetCenter).normalize();
-        this.camera.up.copy(normal);
-    
-
-        let forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
-        forward.projectOnPlane(normal);
-
-        let right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion).normalize();
-        right.projectOnPlane(normal);
-    
-        // Update the direction based on key input
-        this.direction.set(0, 0, 0);
-        if (this.moveForward) this.direction.add(forward);
-        if (this.moveBackward) this.direction.sub(forward);
-        if (this.moveLeft) this.direction.sub(right);
-        if (this.moveRight) this.direction.add(right);
-        if (this.isJumping) {
-            // Apply gravity more gently for a smoother jump
-            this.verticalVelocity += (this.gravity * deltaTime) * 0.5;  // Scale the gravity effect
-    
-            // Update the camera's vertical position
-            this.controls.getObject().position.y += this.verticalVelocity * deltaTime;
-    
-            // Check if the camera has landed
-            let distanceFromPlanetCenter = this.controls.getObject().position.distanceTo(this.planet.mesh.position);
-            let planetRadius = this.planet.mesh.geometry.parameters.radius;
-            if (distanceFromPlanetCenter <= (planetRadius + this.cameraHeightAboveSurface)) {
-                this.controls.getObject().position.y = planetRadius + this.cameraHeightAboveSurface;
-                this.isJumping = false;
-                this.verticalVelocity = 0;
-            }
-        }
-        // Apply the movement
-        let velocity = this.direction.normalize().multiplyScalar(this.speed * deltaTime);
-        this.controls.getObject().position.add(velocity);
-    
-        // Adjust the camera's height based on the normal
-        let desiredPosition = new THREE.Vector3().addVectors(planetCenter, normal.multiplyScalar(this.planet.mesh.geometry.parameters.radius + this.cameraHeightAboveSurface));
-        this.controls.getObject().position.lerp(desiredPosition, 0.1); // Smooth transition to desired position
+    if (forwardVelocity != 0 || strafeVelocity != 0) {
+      this.headBobActive_ = true;
     }
-    
+  }
+
+  updateRotation_() {
+    const xh = this.input_.current_.mouseXDelta / window.innerWidth;
+    const yh = this.input_.current_.mouseYDelta / window.innerHeight;
+
+    this.phi_ += -xh * this.phiSpeed_;
+    this.theta_ = this.clamp(this.theta_ + -yh * this.thetaSpeed_, -Math.PI / 3, Math.PI / 3);
+
+    const qx = new THREE.Quaternion();
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.phi_);
+    const qz = new THREE.Quaternion();
+    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.theta_);
+
+    const q = new THREE.Quaternion();
+    q.multiply(qx);
+    q.multiply(qz);
+
+    this.rotation_.copy(q);
+  }
 }

@@ -8,7 +8,7 @@ export class Planet {
         )
         texture.wrapS = THREE.MirroredRepeatWrapping;
         texture.wrapT = THREE.MirroredRepeatWrapping;
-        texture.repeat.set(2056, 2056);
+        texture.repeat.set(256, 256);
         let material = new THREE.MeshBasicMaterial({
             map: texture
         });
