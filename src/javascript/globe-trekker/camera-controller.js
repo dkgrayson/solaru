@@ -28,7 +28,7 @@ export class CameraController {
   }
 
   update(timeElapsedS) {
-    this.updateRotation_(timeElapsedS);
+    this.updateRotation_();
     this.updateCamera_(timeElapsedS);
     this.updateTranslation_(timeElapsedS);
     this.updateHeadBob_(timeElapsedS);

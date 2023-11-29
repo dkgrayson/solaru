@@ -65,6 +65,10 @@ export class InputController {
     }
   }
 
+  getMousePosition() {
+    return { x: this.current_.mouseX, y: this.current_.mouseY };
+  }
+
   onKeyDown_(e) {
     this.keys_[e.keyCode] = true;
   }

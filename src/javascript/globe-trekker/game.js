@@ -1,5 +1,6 @@
 import { CameraController } from './camera-controller.js';
 import { Planet } from './planet.js';
+import BackgroundImage from '../../resources/globe-trekker/stars.jpg'
 import * as THREE from 'three';
 
 export class Game {
@@ -11,7 +12,6 @@ export class Game {
     this.initializeRenderer_();
     this.initializeLights_();
     this.initializescene();
-    this.initializePostFX_();
     this.initializeDemo_();
 
     this.previousRAF_ = null;
@@ -58,18 +58,11 @@ export class Game {
     let planet = new Planet(95000, 256, 256);
     this.scene.add(planet.mesh);
 
-    const mapLoader = new THREE.TextureLoader();
-    const maxAnisotropy = this.threejs_.capabilities.getMaxAnisotropy();
-    const crosshair = mapLoader.load('../resources/globe-trekker/crosshair.png');
-    crosshair.anisotropy = maxAnisotropy;
-
-    this.sprite_ = new THREE.Sprite(
-      new THREE.SpriteMaterial({map: crosshair, color: 0xffffff, fog: false, depthTest: false, depthWrite: false}));
-    this.sprite_.scale.set(0.15, 0.15 * this.camera_.aspect, 1)
-    this.sprite_.position.set(0, 0, -10);
-
-    this.uiScene.add(this.sprite_);
-  }
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(BackgroundImage, (texture) => {
+        this.scene.background = texture;
+    });
+}
 
   initializeLights_() {
     const distance = 50.0;
@@ -77,7 +70,6 @@ export class Game {
     const penumbra = 0.5;
     const decay = 1.0;
 
-    // Create a new SpotLight with updated parameters
     let light = new THREE.SpotLight(0xFFFFFF, 100.0, distance, angle, penumbra, decay);
     light.castShadow = true;
     light.shadow.bias = -0.00001;
@@ -98,9 +90,6 @@ export class Game {
     light.groundColor.setHSL(0.095, 1, 0.75);
     light.position.set(0, 4, 0);
     this.scene.add(light);
-  }
-
-  initializePostFX_() {
   }
 
   onWindowResize_() {
