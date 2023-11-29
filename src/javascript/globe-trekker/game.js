@@ -1,6 +1,6 @@
 import { CameraController } from './camera-controller.js';
 import { Planet } from './planet.js';
-import BackgroundImage from '../../resources/globe-trekker/stars.jpg'
+import BackgroundImage from '../../resources/globe-trekker/stars3.jpg'
 import * as THREE from 'three';
 
 export class Game {
@@ -58,11 +58,20 @@ export class Game {
     let planet = new Planet(95000, 256, 256);
     this.scene.add(planet.mesh);
 
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load(BackgroundImage, (texture) => {
-        this.scene.background = texture;
-    });
-}
+    // Use CubeTextureLoader to load the skybox texture
+    const cubeTextureLoader = new THREE.CubeTextureLoader();
+    const textureCube = cubeTextureLoader.load([
+      BackgroundImage, // right
+      BackgroundImage, // left
+      BackgroundImage, // top
+      BackgroundImage, // bottom
+      BackgroundImage, // back
+      BackgroundImage  // front
+    ]);
+
+    // Set the scene background to the loaded texture
+    this.scene.background = textureCube;
+  }
 
   initializeLights_() {
     const distance = 50.0;
