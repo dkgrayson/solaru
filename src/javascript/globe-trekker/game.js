@@ -1,6 +1,6 @@
 import { CameraController } from './camera-controller.js';
 import { Planet } from './planet.js';
-import BackgroundImage from '../../resources/globe-trekker/stars3.jpg'
+import BackgroundImage from '../../resources/globe-trekker/sky.jpg'
 import * as THREE from 'three';
 
 export class Game {
@@ -12,26 +12,28 @@ export class Game {
     this.initializeRenderer_();
     this.initializeLights_();
     this.initializescene();
-    this.initializeDemo_();
+    this.initializeApp();
 
     this.previousRAF_ = null;
     this.raf_();
     this.onWindowResize_();
   }
 
-  initializeDemo_() {
+  initializeApp() {
      this.fpsCamera_ = new CameraController(this.camera_, this.objects_);
   }
 
   initializeRenderer_() {
     this.threejs_ = new THREE.WebGLRenderer({
-      antialias: false,
+      antialias: true,
     });
     this.threejs_.shadowMap.enabled = true;
     this.threejs_.shadowMap.type = THREE.PCFSoftShadowMap;
     this.threejs_.setPixelRatio(window.devicePixelRatio);
     this.threejs_.setSize(window.innerWidth, window.innerHeight);
     this.threejs_.outputColorSpace  = THREE.SRGBColorSpace;
+    this.threejs_.gammaFactor = 2.2;
+    this.threejs_.gammaOutput = true;
 
     document.body.appendChild(this.threejs_.domElement);
 
@@ -39,7 +41,7 @@ export class Game {
       this.onWindowResize_();
     }, false);
 
-    const fov = 60;
+    const fov = 15;
     const aspect = 1920 / 1080;
     const near = 1.0;
     const far = 20000;
@@ -50,7 +52,7 @@ export class Game {
     this.scene = new THREE.Scene();
 
     this.uiCamera_ = new THREE.OrthographicCamera(
-        -1, 1, 1 * aspect, -1 * aspect, 1, 5000);
+        -1, 1, 1 * aspect, -1 * aspect, 1, 10000);
     this.uiScene = new THREE.Scene();
   }
 
@@ -60,19 +62,15 @@ export class Game {
       this.scene.add(mesh);
     })
 
-    // Use CubeTextureLoader to load the skybox texture
-    const cubeTextureLoader = new THREE.CubeTextureLoader();
-    const textureCube = cubeTextureLoader.load([
-      BackgroundImage, // right
-      BackgroundImage, // left
-      BackgroundImage, // top
-      BackgroundImage, // bottom
-      BackgroundImage, // back
-      BackgroundImage  // front
-    ]);
 
-    // Set the scene background to the loaded texture
-    this.scene.background = textureCube;
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(BackgroundImage, (texture) => {
+      const skyGeo = new THREE.SphereGeometry(95000 + 1000, 256, 256);
+      const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+      const sky = new THREE.Mesh(skyGeo, material);
+      this.scene.add(sky);
+    });
+    this.scene.fog = new THREE.Fog(0xffffff, 1, 10000);
   }
 
   initializeLights_() {
@@ -87,8 +85,7 @@ export class Game {
     light.shadow.mapSize.width = 4096;
     light.shadow.mapSize.height = 4096;
     light.shadow.camera.near = 1;
-    light.shadow.camera.far = 100;
-
+    light.shadow.camera.far = 10000;
     light.position.set(25, 25, 0);
     light.lookAt(0, 0, 0);
     this.scene.add(light);

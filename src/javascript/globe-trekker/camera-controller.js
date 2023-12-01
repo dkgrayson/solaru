@@ -100,9 +100,6 @@ export class CameraController {
     if (forwardVelocity != 0 || strafeVelocity != 0) {
       this.headBobActive_ = true;
     }
-
-    // Debugging: Log the camera position
-    console.log('Camera position:', this.translation_);
   }
 
 
