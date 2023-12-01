@@ -6,12 +6,13 @@ export class CameraController {
     this.camera_ = camera;
     this.input_ = new InputController();
     this.rotation_ = new THREE.Quaternion();
-    this.translation_ = new THREE.Vector3(0, 95000 + 10, 0);
+    this.planetRadius = 95000;
+    this.translation_ = new THREE.Vector3(0, this.planetRadius + 1, 0);
     this.phi_ = 0;
     this.phiSpeed_ = 8;
     this.theta_ = 0;
     this.thetaSpeed_ = 5;
-    this.walkingSpeed = 10
+    this.walkingSpeed = 100
     this.headBobActive_ = false;
     this.headBobTimer_ = 10;
     this.objects_ = objects;
@@ -84,26 +85,27 @@ export class CameraController {
 
     const forward = new THREE.Vector3(0, 0, -1);
     forward.applyQuaternion(qx);
-    forward.multiplyScalar(forwardVelocity * timeElapsedS * 10);
+    forward.multiplyScalar(forwardVelocity * timeElapsedS);
 
     const left = new THREE.Vector3(-1, 0, 0);
     left.applyQuaternion(qx);
-    left.multiplyScalar(strafeVelocity * timeElapsedS * 10);
+    left.multiplyScalar(strafeVelocity * timeElapsedS);
 
     this.translation_.add(forward);
     this.translation_.add(left);
 
-    const distanceFromPlanetCenter = this.translation_.length();
-    if (distanceFromPlanetCenter > this.planetRadius + 2) {
-      const heightAdjustment = distanceFromPlanetCenter - this.planetRadius;
-      this.translation_.multiplyScalar((this.planetRadius + 2) / distanceFromPlanetCenter);
-      this.translation_.y += heightAdjustment;
-    }
+    // Adjust y-component of the translation to maintain height above the planet
+    this.translation_.y = this.planetRadius + 10; // Assuming 10 units above the surface
 
     if (forwardVelocity != 0 || strafeVelocity != 0) {
       this.headBobActive_ = true;
     }
+
+    // Debugging: Log the camera position
+    console.log('Camera position:', this.translation_);
   }
+
+
 
   updateRotation_() {
     const xh = this.input_.current_.mouseXDelta / window.innerWidth;

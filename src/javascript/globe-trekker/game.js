@@ -42,21 +42,23 @@ export class Game {
     const fov = 60;
     const aspect = 1920 / 1080;
     const near = 1.0;
-    const far = 1000.0;
+    const far = 20000;
     this.camera_ = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    this.camera_.position.set(0, 2, 0);
+    this.camera_.position.set(0, 10000, 0);
+
 
     this.scene = new THREE.Scene();
 
     this.uiCamera_ = new THREE.OrthographicCamera(
-        -1, 1, 1 * aspect, -1 * aspect, 1, 1000);
+        -1, 1, 1 * aspect, -1 * aspect, 1, 5000);
     this.uiScene = new THREE.Scene();
   }
 
   initializescene() {
     this.objects_ = [];
-    let planet = new Planet(95000, 256, 256);
-    this.scene.add(planet.mesh);
+    const planet = new Planet(95000, 256, 256, (mesh) => {
+      this.scene.add(mesh);
+    })
 
     // Use CubeTextureLoader to load the skybox texture
     const cubeTextureLoader = new THREE.CubeTextureLoader();

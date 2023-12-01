@@ -1,18 +1,24 @@
 import * as THREE from 'three';
+import SurfaceTexture from '../../resources/globe-trekker/surface.jpg'
+
 
 export class Planet {
-    constructor(radius, widthSegments, heightSegments) {
+    constructor(radius, widthSegments, heightSegments, onReady) {
         const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
-        let texture = new THREE.TextureLoader().load(
-            'https://images.pexels.com/photos/2117937/pexels-photo-2117937.jpeg'
-        )
-        texture.wrapS = THREE.MirroredRepeatWrapping;
-        texture.wrapT = THREE.MirroredRepeatWrapping;
-        texture.repeat.set(256, 256);
-        let material = new THREE.MeshBasicMaterial({
-            map: texture
-        });
-
-        this.mesh = new THREE.Mesh(geometry, material);
+        const textureLoader = new THREE.TextureLoader().setCrossOrigin('anonymous');
+        textureLoader.load(
+            SurfaceTexture,
+            (texture) => {
+                const material = new THREE.MeshBasicMaterial({ map: texture });
+                this.mesh = new THREE.Mesh(geometry, material);
+                if (onReady) {
+                    onReady(this.mesh);
+                }
+            },
+            undefined,
+            (error) => {
+                console.error('An error occurred loading the texture:', error);
+            }
+        );
     }
 }
